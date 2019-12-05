@@ -1,3 +1,6 @@
+use rayon::prelude::*;
+use std::time::Instant;
+
 fn check_password(num: i64) -> bool {
     let string = num.to_string();
     let chars: Vec<char> = string.chars().collect();
@@ -46,20 +49,59 @@ fn check_password_part_2(num: i64) -> bool {
     return has_double;
 }
 
-fn main() {
-    let passwords = 307237..=769058;
+fn series(passwords: &Vec<i64>) {
     let total = passwords
-        .filter(|p| check_password(*p))
+        .iter()
+        .filter(|p| check_password(**p))
         .count();
     
     println!("part1: {}", total);
 
-    let passwords = 307237..=769058;
     let total2 = passwords
-        .filter(|p| check_password_part_2(*p))
+        .iter()
+        .filter(|p| check_password_part_2(**p))
         .count();
 
     println!("part2: {}", total2);
+}
+
+fn parallel(passwords: &Vec<i64>) {
+    let total = passwords
+        .par_iter()
+        .filter(|p| check_password(**p))
+        .count();
+    
+    println!("part1: {}", total);
+
+    let total2 = passwords
+        .par_iter()
+        .filter(|p| check_password_part_2(**p))
+        .count();
+
+    println!("part2: {}", total2);
+}
+
+fn main() {
+    let passwords: Vec<i64> = (307237..=769058).collect();
+
+    // parallel/series benchmarks:
+    //   debug series:     1.754s
+    //   debug parallel:   532ms
+    //
+    //   release series:   175ms
+    //   release parallel: 55ms
+    //
+    // the parallel version tends to be about 70% faster, nice
+
+    let start = Instant::now();
+    series(&passwords);
+    let end = Instant::now();
+    println!("series: {:?}\n", end.duration_since(start));
+
+    let start = Instant::now();
+    parallel(&passwords);
+    let end = Instant::now();
+    println!("parallel: {:?}", end.duration_since(start));
 }
 
 #[cfg(test)]
